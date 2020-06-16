@@ -130,7 +130,7 @@ public class WebhookController {
     private SessionService sessionService;
 	
 	@GetMapping(value = "/findSession")
-    public ResponseEntity<List<Session>> getSession(@PathVariable("id") String id) {
+    public ResponseEntity<List<Session>> getSession() {
 
         List<Session> session = sessionService.getSession();
         for(int i=0;i<session.size();i++) {
