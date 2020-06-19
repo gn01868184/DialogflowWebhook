@@ -20,6 +20,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import springboot.webhook.mongodb.entity.Session;
 import springboot.webhook.mongodb.entity.SessionRequest;
+import springboot.webhook.mongodb.repository.SessionRepository;
 import springboot.webhook.mongodb.service.SessionService;
 
 import org.springframework.http.MediaType;
@@ -37,6 +38,11 @@ import java.net.URI;
 @EnableScheduling
 @Controller
 public class WebhookController {
+    @Autowired
+    private SessionService sessionService;
+    @Autowired
+    private SessionRepository repository;
+    
 	@ResponseBody
 	@GetMapping(value = "/rate", produces="application/json")
 	public Map<String, String> rate() throws IOException{
@@ -78,6 +84,12 @@ public class WebhookController {
 	            Session session = sessionService.createSession(sessionIdMap);
 	    		text = "設定好每日通知囉";
 	    		break;
+	    	case "cancelDailyNotification":
+	    		String cancelSessionId = ((Map<String,Object>) ((Map<String,Object>) ((Map<String,Object>) ((Map<String,Object>) json.get("originalDetectIntentRequest")).get("payload")).get("data")).get("sender")).get("id").toString();
+	    		System.out.println("sessionId: " + cancelSessionId);
+	            repository.deleteBySessionId(cancelSessionId);
+	            text = "取消每日通知囉";
+	    		break;
 	    }
 	    DialogflowOutput dialogflowOutput = new DialogflowOutput();
 	    Map<String, List<Map<String, Map<String, List<String>>>>> response = dialogflowOutput.output(text);
@@ -86,6 +98,7 @@ public class WebhookController {
 	
 	    @Scheduled(cron = "0/5 * * * * *")
 	    public void scheduled(){
+	    	
 	        List<Session> session = sessionService.getSession();
 	        String rateText = "目前找不到匯率";
 		    try {
@@ -125,10 +138,7 @@ public class WebhookController {
 		        restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
 	        }
 	    }
-	    
-    @Autowired
-    private SessionService sessionService;
-	
+
 	@GetMapping(value = "/findSession")
     public ResponseEntity<List<Session>> getSession() {
 
@@ -138,6 +148,5 @@ public class WebhookController {
         }
         return ResponseEntity.ok(session);
     }
-	
 
 }
